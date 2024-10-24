@@ -1,0 +1,31 @@
+DECLARE @TableCount TABLE ([run_status] varchar(55),[run_date]  varchar(55))                
+DECLARE @date_tag date, @date nvarchar(55)    
+SET @date_tag=getdate() set @date = ( select replace(cast(@date_tag as nvarchar) ,'-', '') )
+
+    INSERT INTO @TableCount([run_status],[run_date]) 
+    SELECT TOP 1 jobhistory.run_status, jobhistory.run_date 
+    FROM [mocsql].msdb.dbo.sysjobs job 
+    INNER JOIN 
+    [mocsql].msdb.dbo.sysjobhistory jobhistory 
+    ON job.job_id = jobhistory.job_id 
+    WHERE job.name ='Load VINOWNER Records.Subplan_1'  and jobhistory.step_id = 2 and run_status=1 and jobhistory.run_date=@date 
+    ORDER BY jobhistory.run_date DESC, jobhistory.run_time DESC
+
+     -- see what the currently approved batch file date was 
+      EXEC [dbo].[usp_update_CRC_Activity]	'Current'
+
+	DECLARE @count int
+	select @count= count(*) from @TableCount
+	
+	IF @count=0
+		BEGIN	
+		DECLARE @StringVariable NVARCHAR(50)  
+		SET @StringVariable =N'<<%7.50s>>' 
+ 
+		RAISERROR (@StringVariable, 			-- Message text  
+           		16,						-- Severity  
+           		1,						-- State  
+           		N'Check VINOWNER Subplan_1 job status')
+	
+	END
+
