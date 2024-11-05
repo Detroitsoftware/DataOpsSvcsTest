@@ -1,0 +1,25 @@
+exec('DECLARE @Sql NVARCHAR(MAX), @body nvarchar(max), @Recipients nvarchar(max), @JobID int, @Sub nvarchar(255)
+
+DECLARE @tab AS TABLE (col1 VARCHAR(max), col2 varchar(max))
+SET @JobID=1
+
+select @Sql = Query FROM  [Utilities].[dbo].[Email_Notification_Message] where JobID=@JobID
+
+INSERT into @tab EXECUTE  sp_executesql @Sql
+SELECT @body=col1 FROM @tab
+
+select @Recipients=col2 from @tab
+
+Select @Sub= [Subject] from [Utilities].[dbo].[Email_Notification_Message] where JobID=@JobID
+
+EXEC msdb.dbo.sp_send_dbmail
+
+@profile_name = ''LatchaAutomation'',
+
+@body = @body,
+
+@body_format =''HTML'',
+
+@recipients = @Recipients,
+
+@subject = @Sub') at ETLSQLPROD
